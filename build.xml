@@ -1,0 +1,265 @@
+<project name="JSoko" default="makeJar" basedir=".">
+
+	<!-- Configuration -->
+	<target name="conf">
+		<property name="version" value="2.25" />
+		<property name="name" value="JSoko" />
+		<property name="andBuildScript" value="build.xml" />
+		<property name="base" value="." />
+		<property name="src" value="./src/" />
+		<property name="src.jsoko" value="./src/de/sokoban_online/jsoko/" />
+		<property name="src.nimrodlf" value="./src/nimrodlf/" />
+		<property name="resources" value="./resources/" />
+		<property name="development" value="./development/" />
+		<property name="build" value="./build/" />
+		<property name="release" value="./release/" />
+		<property name="release.database" value="${release}/defaultDatabase" />
+		<property name="sound" value="/sounds" />
+		<property name="texts" value="/texts" />
+		<property name="testlevel" value="/testlevel" />
+		<property name="release.graphics" value="${release}/graphics" />
+		<property name="release.skins" value="${release}/skins" />
+		<property name="additionalLibs" value="./lib" />
+		<property name="dir.graphics" value="${resources}/graphics" />
+		<property name="dir.skins" value="${resources}/skins" />
+		<property name="dir.defaultDatabase" value="${resources}/defaultDatabase" />
+		<property name="licensefile" value="${resources}/License JSoko.txt" />
+		<property name="licensefileHSQLDB" value="${resources}/License of HSQLDB.txt" />
+		<property name="licensefileJIDE" value="${resources}/License of JIDE Common Layer.txt" />
+		<property name="readme" value="${resources}/readme.txt" />
+		<property name="vmoptions" value="${resources}/JSoko.vmoptions" />
+		<property name="startFile.windows" value="Start_JSoko_Windows.bat" />
+		<property name="startFile.linux" value="Start_JSoko_Linux.sh" />
+		<property name="settingsfile" value="${resources}/settings.ini" />
+		<property name="classpath" value="${base};${resources}/${additionalLibs}/hsqldb-2.7.4.jar;${release}/${additionalLibs}/nimrodlf.jar;${release}/${additionalLibs}/jide-oss-3.7.15.jar;${release}/${additionalLibs}/gson-2.13.0.jar;${release}/${additionalLibs}/jh.jar;${release}/${additionalLibs}/JSoko_Help.jar;${release}/${additionalLibs}/commons-io-2.19.0.jar" />
+		<property name="manifest.classpath" value="${base} ${additionalLibs}/hsqldb-2.7.4.jar ${additionalLibs}/nimrodlf.jar ${additionalLibs}/jide-oss-3.7.15.jar ${additionalLibs}/gson-2.13.0.jar ${additionalLibs}/jh.jar ${additionalLibs}/JSoko_Help.jar ${additionalLibs}/commons-io-2.19.0.jar" />
+		<property name="javac.classpath" value="src/nimrodlf/src;src/nimrodlf;src;resources;test;resources/lib/jh.jar;resources/lib/JSoko_Help.jar;resources/lib/jide-oss-3.7.15.jar;resources/lib/commons-io-2.19.0.jar;resources/lib/hsqldb-2.7.4.jar;resources/lib/gson-2.13.0.jar" />
+	</target>
+
+	<!-- Make directories -->
+	<target name="mkdirs" depends="conf">
+		<delete dir="${build}" />
+		<delete dir="${release}" />
+		<mkdir dir="${build}" />
+		<mkdir dir="${release}" />
+	</target>
+
+
+	<!-- Copy files -->
+	<target name="copy" depends="conf">
+
+		<!-- copy the settings file and set the correct version number -->
+		<filter token="version" value="${version}" />
+		<copy file="${settingsfile}" todir="${release}" filtering="true" />
+
+		<!-- copy settings file -->
+		<copy file="${settingsfile}" todir="${release}" />
+
+		<!-- copy default database -->
+		<copy todir="${release.database}">
+			<fileset dir="${dir.defaultDatabase}" />
+		</copy>
+
+		<!-- copy sounds -->
+		<copy todir="${release}/${sound}">
+			<fileset dir="${resources}/${sound}" />
+		</copy>
+
+		<!-- copy language texts -->
+		<copy todir="${release}/${texts}">
+			<fileset dir="${resources}/${texts}" />
+		</copy>
+		<!-- Create a new default text file from the english one -->
+		<copy file="${resources}/${texts}/texts_en.properties" toFile="${release}/${texts}/texts.properties" />
+
+		<!-- copy license file JSoko -->
+		<copy file="${licensefile}" todir="${release}" />
+
+		<!-- copy license file of HSQLDB-->
+		<copy file="${licensefileHSQLDB}" todir="${release}" />
+
+		<!-- copy license file of JIDE -->
+		<copy file="${licensefileJIDE}" todir="${release}" />
+
+		<!-- copy readme.txt -->
+		<copy file="${readme}" todir="${release}" />
+
+	     <!-- copy vm options file (only useed for deb-file creation) -->
+	     <copy file="${vmoptions}" todir="${release}" />
+		
+		<!-- copy start files for JSoko -->
+		<copy file="${resources}/${startFile.windows}" todir="${release}" />
+		<!--  <copy file="${resources}/${startFile.linux}" todir="${release}" /> -->
+		<chmod file="${release}/${startFile.linux}" perm="ugo+rx"/>
+
+		<!-- copy graphics -->
+		<copy todir="${release.graphics}">
+			<fileset dir="${dir.graphics}">
+				<exclude name="**/Thumbs.db" />
+			</fileset>
+		</copy>
+
+		<!-- copy skins -->
+		<copy todir="${release.skins}">
+			<fileset dir="${dir.skins}">
+				<exclude name="**/Thumbs.db" />
+			</fileset>
+		</copy>
+
+		<!-- copy the lib folder -->
+		<copy todir="${release}/${additionalLibs}">
+			<fileset dir="${resources}/${additionalLibs}" />
+		</copy>
+		<copy todir="${build}/${additionalLibs}">
+			<fileset dir="${resources}/${additionalLibs}" />
+		</copy>
+
+		<!-- Create a new manifest every time instead of copying one. -->
+		<manifest file="MANIFEST.MF">
+			<attribute name="Built-By" value="${user.name}" />
+			<attribute name="Specification-Title" value="${name}" />
+			<attribute name="Specification-Vendor" value="Matthias Meger" />
+			<attribute name="Implementation-Version" value="${version}" />
+			<attribute name="Main-Class" value="de.sokoban_online.jsoko.JSoko" />
+			<attribute name="Class-Path" value="${manifest.classpath}" />
+		</manifest>
+	</target>
+
+	<!-- Compile NimROD look and feel -->
+	<target name="NimROD" depends="conf, mkdirs, copy">
+
+		<!-- Copy icons -->
+		<copy todir="${build}/nimrodlf/com/nilo/plaf/nimrod/icons/" encoding="UTF-8" >
+			<fileset dir="${src.nimrodlf}/src/com/nilo/plaf/nimrod/icons/">
+				<include name="**/*.png" />
+				<exclude name="**/Thumbs.db" />
+			</fileset>
+		</copy>
+
+		<!-- Compile NimROD sources -->
+		<javac encoding="UTF8" deprecation="true" release="17" includeantruntime="false" classpath="${javac.classpath}"
+			srcdir="${src.nimrodlf}/src" destdir="${build}/nimrodlf/" />
+
+		<!-- Build NimROD jar. -->
+		<jar jarfile="${release}/lib/nimrodlf.jar" basedir="${build}/nimrodlf/" manifest="${src.nimrodlf}/manifest.mf" />
+
+		<!-- NimROD has been build. Delete the files not needed anymore. -->
+		<delete dir="${build}/nimrodlf" />
+
+	</target>
+
+
+	<!-- Simple build without extra zipping -->
+	<target name="makeJar" depends="conf, mkdirs, copy, NimROD">
+
+		<!-- compile the sources -->
+		<javac encoding="UTF8" deprecation="true" release="17" includeantruntime="false" classpath="${javac.classpath}"
+			   srcdir="${src.jsoko};${resources};${src.nimrodlf}" destdir="${build}" />
+
+		<!-- delete the /lib folder -->
+		<delete dir="${build}/lib" />
+
+		<!-- create a jar file -->
+		<jar jarfile="${build}/${name}.jar" basedir="${build}" manifest="MANIFEST.MF" />
+
+		<!-- copy the jar file to the release folder -->
+		<copy file="${build}/${name}.jar" todir="${release}" />
+
+		<!-- delete the build folder -->
+		<delete dir="${build}" />
+
+		<!-- Rename the release folder to "JSoko_Version" -->
+		<move todir="./${name}_${version}">
+			<fileset dir="${release}" />
+		</move>
+		
+		<!-- The manifest is deleted. It is created new every time JSoko is built. -->
+		<delete file="MANIFEST.MF" />
+	</target>
+
+	<!-- Build -->
+	<target name="buildJSoko" depends="conf, mkdirs, copy, NimROD">
+
+		<!-- compile the sources -->
+		<javac encoding="UTF8" deprecation="true" release="17" includeantruntime="false" classpath="${javac.classpath}"
+			srcdir="${src.jsoko};${src.nimrodlf}" destdir="${build}" />
+
+		<!-- delete the /lib folder -->
+		<delete dir="${build}/lib" />
+
+		<!-- create a jar file -->
+		<jar jarfile="${build}/${name}.jar" basedir="${build}" manifest="MANIFEST.MF" />
+
+		<!-- zip the jar with a higher rate -->
+		<mkdir dir="${build}/temp" />
+		<unzip src="${build}/${name}.jar" dest="${build}/temp" />
+		<delete file="${build}/${name}.jar" />
+		<exec dir="${build}/temp" executable="cmd" osfamily="winnt">
+			<arg line="/c c:\programme\7-zip\7z a -tzip -mx=9 -mfb=258 -mpass=10 -r ..\${name}.jar *.*" />
+		</exec>
+		<exec dir="${build}/temp" executable="/bin/sh" os="Linux">
+			<arg line='-c "C:\programme\7-zip\7z a -tzip -mx=9 -mfb=258 -mpass=10 -r ../${name}.jar *.*"' />
+		</exec>
+
+		<!-- copy the jar file to the release folder -->
+		<copy file="${build}/${name}.jar" todir="${release}" />
+
+		<!-- delete the build folder -->
+		<delete dir="${build}" />
+
+		<!-- The manifest is deleted. It is created new every time JSoko is built. -->
+		<delete file="MANIFEST.MF" />
+	</target>
+
+
+	<!-- Build a release -->
+	<target name="build release" depends="conf, mkdirs, copy, buildJSoko, NimROD">
+
+		<!-- create a zip with the release -->
+		<exec dir="${release}" executable="cmd" osfamily="winnt">
+			<arg line="/c C:\programme\7-zip\7z a -tzip -mx=9 -mfb=258 -mpass=10 -r .\release_zipped\${name}_${version}.zip" />
+		</exec>
+		<exec dir="${release}" executable="/bin/sh" os="Linux">
+			<arg line='-c "C:\programme\7-zip\7z a -tzip -mx=9 -mfb=258 -mpass=10 -r ./release_zipped/${name}_${version}.zip"' />
+		</exec>
+
+		<!-- move all relevant files for the source release in one temporary folder. -->
+		<mkdir dir="./temp/" />
+		<copy todir="./temp/src">
+			<fileset dir="${src}">
+			</fileset>
+		</copy>
+
+		<copy todir="./temp/resources">
+			<fileset dir="${resources}">
+				<exclude name="debug*.*" />
+				<exclude name="**/Thumbs.db" />
+			</fileset>
+		</copy>
+
+		<!-- copy the build script to the source folder -->
+		<copy file="${andBuildScript}" todir="./temp/" />
+
+		<!-- copy test levels -->
+		<copy todir="./temp/${testlevel}">
+			<fileset dir="${base}/${testlevel}" />
+		</copy>
+		
+		<!-- copy development notes -->
+		<copy todir="./temp/${development}">
+			<fileset dir="${base}/${development}" />
+		</copy>
+
+		<!-- create a zip with the sources -->
+		<exec dir="./temp/" executable="cmd" osfamily="winnt">
+			<arg line="/c C:\programme\7-zip\7z a -tzip -mx=9 -mfb=258 -mpass=10 -r ..\${release}\release_zipped\${name}_${version}-src.zip *.*" />
+		</exec>
+		<exec dir="./temp/" executable="/bin/sh" os="Linux">
+			<arg line='-c "C:\programme\7-zip\7z a -tzip -mx=9 -mfb=258 -mpass=10 -r ../release/release_zipped/${name}_${version}-src.zip"' />
+		</exec>
+
+		<!-- delete the temp folder -->
+		<delete dir="./temp/" />
+	</target>
+
+</project>

@@ -1,0 +1,519 @@
+Box in corral
+
+#########
+#* #    #
+#. $ $. #
+#+ $    #
+#########
+
+
+PI-Corral, but all on goals
+
+     ######
+######    #
+#.$  *  * #
+#  @$.    #
+###########
+
+
+Box in corral
+
+#########
+#*## .  #
+#. $ $$.#
+#+ $    #
+#########
+
+
+Box in corral "immoveable" => PI-Corral
+
+###########
+#*##   .# #
+#. $   $$.#
+#+ $    # #
+###########
+
+
+PI-Corral - No PI-Corral
+
+ ###########
+##         #
+#.   ###   #
+#. $   $  .#
+##  $###   #
+ ## @# #####
+  ####  
+
+
+PI-Corral
+
+ ###########
+##         #
+#.  $###   #
+#*   ..$   #
+##  $###   #
+ ## @# #####
+  ####  
+
+
+PI-Corral
+
+##########
+#*##  *# #
+#. $   $.#
+#+ $   # #
+##########
+
+
+PI-Corral
+
+#########
+#* **   #
+#.@$    #
+#########
+
+
+combined PI-Corral
+
+#####    
+#   #####
+# .  $ .#
+#### ## #
+# #  $@ #
+#.$ #*  #
+### ##$##
+# . $   #
+##### .##
+    #### 
+
+
+Several corrals, also an PI-Corral
+
+######    
+#.  .#####
+#$##  . .#
+#   $#$#$#
+####@# # ##
+   #   $ .#
+   ########
+
+
+PI-Corral, after the box has been pushed
+
+#####   
+# . ####
+#.$$   #
+#.@$   #
+########
+
+
+PI-Corral, because boxes mustn't be pushed to deadlock squares
+
+######
+#*   #
+# @ $##
+##$#..#
+ #  #$#
+ #.   #
+ ######
+
+
+No PI-Corral
+
+########
+#    @ #
+#      #
+# $   ##
+#* *   #
+# $.#  #
+## .  ##
+########
+
+
+Combined PI-Corral 0
+
+######
+#*   #
+# @ $##
+##$#..#
+ #  #$#
+ #.   #
+ #    #
+ ######
+
+
+Combined PI-Corral 1
+
+#########
+#     # #
+#@ .    #
+###$###$#
+ #  #   #
+ #  $. .#
+ #  #  ##
+ ####### 
+
+
+Combined PI-Corral 2
+
+  #######
+  #*    #
+### @  $#
+#*  $ #.#
+# ## ##.#
+#    . $#
+#### ## #
+   #    #
+   ######
+
+
+Combined PI-Corral 3
+
+#########
+#*      #
+#     $ #
+# #*## ##
+#@#  #. #
+#$## *  #
+#  ## ###
+#.    #  
+#######  
+
+
+Not a combined PI-Corral
+
+#########
+#*      #
+#     $ #
+# #*## ##
+#@#  #. #
+#$#  *  #
+#  ## ###
+#.    #  
+####### 
+
+
+Single-PI-Corral in a combined Corral
+
+#########
+#. $@  *#
+#  ###  #
+# #     #
+# #  #  #
+#  *##  #
+### .$  #
+  #  #  #
+  #######
+
+
+corral deadlock detection during PI-Corral detection
+
+    #####
+    #   #
+#####.  #
+#    $  #
+#@ .  # #
+###$###$#
+ #  #   #
+ #  $. .#
+ #  #  ##
+ ####### 
+
+
+PI-Corral detection wih outer squares
+
+###### 
+#*   # 
+#   $##
+# @#..#
+# $  $#
+##.## #
+ #    #
+ ######
+
+
+    #####
+    #   #
+#####   #
+#*  #   #
+#  @$ . #
+#$### #$#
+# #  *  #
+#.  #  .#
+#########
+
+
+Komplex PI-Corral
+
+########
+#  .$  #
+# *$  .#
+#+$ *#.#
+# $ $ #
+#$#$..##
+#.. $  #
+########
+
+
+Not an PI-Corral! (different treatment of outer boxes!)
+
+#######
+#     #
+# @$$ #
+#  .$##
+# ##  #
+# *   #
+# # ..#
+#######
+
+
+Frozen box causes PI-Corral
+
+######  
+#    ###
+#   * .#
+#  *$@ #
+#  *  *#
+########
+
+
+Frozen box causes PI-Corral 2
+
+#####
+#   ###
+#  * .#
+# *$@ #
+# *  *#
+#######
+
+If the frozen box is determined dynamically
+
+wenn die geblockte Kiste dynamisch ermittelt wird, dann würde sie nicht erkannt,
+weil alle Kisten, mit denen sie zusammenhängt nicht in die Gegenrichtung geschoben
+werden können, da es simple Deadlockfelder sind.
+
+
+
+Alle Kisten auf Zielfeldern Test 1
+
+#######
+#   # #
+#  *  #
+# * @ #
+# *   #
+# #  $#
+# #  .#
+#* $  #
+#  .# #
+#  ####
+####  
+
+
+Alle Kisten auf Zielfeldern Test 2
+
+########
+#   #  #
+#   *  #
+#   #  #
+#*###  #
+#   #  #
+#  *  ##
+# * @ # 
+# *   # 
+# #  $# 
+# #  .# 
+#* $  # 
+#  .# # 
+#  #### 
+####  
+
+
+Einzel-PI-Corral während Suche
+   #####   
+   #.  #   
+   #...#   
+   #.  #   
+   #.  #   
+##### #####
+#    $  $ #
+# $ $$$@  #
+#    #    #
+###########
+ 
+
+Einzel-PI-Corral während Suche
+
+     ###   
+######*####
+#.$ ##@ $.#
+# .   $ # #
+######$##.#
+     #  #$#
+     #.   #
+     ######
+
+
+Freeze bei Außenfeldern
+
+#####   
+#*  ####
+#. $   #
+#. @$  #
+########
+
+
+Kombiniertes PI-Corral! Kein Einzel-PI-Corral!
+
+########
+# $. ..#
+#.$.$$ #
+#  .$  #
+###  ###
+#*.*$$ #
+# $*   #
+#@.  *##
+########
+
+
+Kein PI-Corral - Freezetest nur bei aktuellem Corral!
+
+########
+#  #   #
+# @* . #
+#  *   #
+### $###
+#  . $ #
+#  .$  #
+#    *##
+########
+
+Wenn der Freezetest mit allen Kisten des kombinierten Corrals durchgeführt würde, dann würde das untere rechte Corral fälschlicherweise als Einzel-PI-Corral erkannt!!!
+Der Freezetest wird deshalb nur durchgeführt, wenn der Push in das aktuelle Corral führt.
+
+
+Hinzufügen von Außenkisten
+
+########
+#  . **#
+#.$.$  #
+#  . $ #
+### $###
+#***@  #
+#  *   #
+# *  *##
+########
+
+
+Hinzufügen von Außenkisten 2
+
+########
+#@$. **#
+#. .$  #
+#  *$  #
+###  ###
+#**. $ #
+#  .$  #
+# *  *##
+########
+
+
+Unbesetztes Zielfeld im Corral
+
+#######
+#.*@  #
+#*  $ #
+#     #
+#######
+
+
+Freeze während Prüfung
+
+    ######  
+  ###    ###
+ ## #  #   #
+##. # *$   #
+#   .**    #
+##  **     #
+# $ .*#    #
+# @#$      #
+#* #       #
+## #  # ####
+#  #### #   
+# $     #   
+# .######   
+#### 
+
+
+Freeze während Prüfung 2
+
+  #######
+ ## . # #
+##.   # #
+#    *$ #
+##  **  #
+# $ .*# #
+# @#$   #
+#* #    #
+####  ###
+   ####  
+
+
+Kombiniertes PI-Corral, aber kein Einzel!
+
+ #########   
+ #       #   
+## ##### #   
+#* #   # #   
+# @* . # ####
+#  *   #   .#
+### $######$#
+#  . $   #  #
+#  .$  #   ##
+#    *##  ## 
+###########  
+
+
+Corralprüfung mit geblockten Kisten
+
+#######
+#.  $ #
+#$$ $ #
+#. .$+#
+#.$*$*#
+## . .#
+#######
+
+
+Durch kombiniertes Corral geblockt auf NichtZielfeld
+
+     ######
+######    #
+#.$  *  * #
+#. @$*    #
+####* ##*##
+#    ##   #
+#         #
+###########
+
+
+Kein PI-Corral
+
+#######
+#     #
+#     #
+#    *#
+#@ $* #
+#.  **#
+#######
+
+
+Kein PI-Corral!
+
+#####   
+#   ####
+# $  #.#
+## $@#.#
+ ## $ .#
+  ##   #
+   #   #
+   #####

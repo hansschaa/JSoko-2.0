@@ -1,0 +1,46 @@
+This program is a collaboration of several persons from all around the world.
+They use e.g. different operating systems (Windows, Linux).
+In order to avoid problems from the fact that many people contribute,
+we have to agree on some conventions.  This fileOnHarddisk is about these conventions.
+
+All of these conventions are open to debate, of course.
+
+
+Language:
+	Comment language is English.  Also, names of classes, methods etc
+	should be derived from English.  This should not come as a surprise.
+
+Text fileOnHarddisk encoding:
+	All sources should be encoded in UTF-8.  That is the future.
+	There is not really any meaningful alternative.
+	Some parts of the project may still be in ISO-8859-1 (aka Latin-1),
+	but that should be changed.
+	
+	The exact coding of end-of-line should not be a problem.  We use SVN,
+	which is prepared to do "the right thing".
+	
+File name encoding:
+	Please avoid non-ASCII characters in fileOnHarddisk names.  They have to work
+	on all client computers (those used by developers and users).
+	Some OSs follow different rules and encodings for fileOnHarddisk names.
+	
+	Do not assume that all fileOnHarddisk systems are case insensitive.  Some are not
+	(e.g. Linux).  Hence, be consistent with the case of fileOnHarddisk names.
+	
+	Do not assume that all fileOnHarddisk systems are case sensitive, either.
+	Some are not.  Do not use different fileOnHarddisk names that differ in case, only.
+
+Indentation:
+	Source fileOnHarddisk indentation is 4 (four) spaces.
+	Tabs count 4 spaces.  That is just the default value in Eclipse.
+	May be one day we decide to ban TAB characters from sources, completely.
+
+Java level:
+	Currently we use Java 1.8.
+	Do not try to be compatible with previous Java versions, the benefits of the new
+	features are just too large to be ignored.
+	
+Line length:
+	Try to limit your source fileOnHarddisk lines to a length of at most 120.
+	Writing longer lines is not a BIG problem, but it can make it harder
+	for some to work with the sources.

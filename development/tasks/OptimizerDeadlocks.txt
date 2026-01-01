@@ -1,0 +1,279 @@
+Author:  Heiner Marxen
+Started: 2011-03-07
+Topic:   Deadlock detection, especially in the optimizer
+
+State before:
+    - reduced geometry, separately for boxes and player (throughout optimizer)
+    - deadlock detection computes and stores box configurations with
+      fixed box cardinality, up to some small limit (2..5)
+    - checking against them is done with 1 box position that just changed
+      (multiple views)
+    - otherwise, linear search with subset check
+    - box-CFs are coded as bit-set
+
+Personal Context:
+    In my small solver (csoso), written mainly in 2010, I use a quite similar
+    concept, but including the player position (full CF vs box-CF).
+    I have collected some experience with computation, compact coding and
+    fast retrieval of such data.
+
+Unsorted ideas and notes:
+--> Bad boxCFs with 2 boxes should be recognized during generation of, or at
+    least encoding of bad boxCFs with 3 and more boxes, etc.
+--> The alternate coding is a vector of (short), one position per box.
+    Because of the limited number of boxes this most often is much shorter.
+--> Superset checking against a large set of candidate subsets has different
+    implementations, e.g. a vector of 2-bit counters, one per candidate.
+--> Deadlock box configurations with 1 box are mostly already caught by
+	Board.isSimpleDeadlockSquare().
+--> There is a possible "inversion" of this kind of deadlock computation:
+    instead of assuring, that K boxes still find some K goals, we may try
+    to compute, whether K goals still have K boxes that can reach them.
+    But all details are still FFS.
+--> We should use a more abstract compact move/push geometry, to prepare for
+    not so trivial changes (tunnels, player only areas)
+
+Significance of this topic:
+    - This does not directly help the optimization process / algorithm.
+    - This does reduce the amount of data over which to optimize.
+    - That way it may help to work with a slightly larger vicinity range.
+    - Changing from box configurations to full configurations this computation
+      may be a significant part of an optimal solver for small levels (csoso).
+
+Significance of representation:
+    - A memory efficient (compact) representation can help us to actually
+      compute, represent and use more deadlock information.
+    - As always, less memory also means better locality and better usage
+      of (CPU) caches.
+
+------------------------------------------------------------------------------
+Phases of data processing:
+
+(1) Determine a compact "geometry", i.e. a compact numbering of
+    (a) box positions
+    (b) player positions
+    and possibly some pre-computation of
+    (c) possible player moves
+    (d) possible pushes
+    (e) possible pulls
+
+(2) Determine the set of all deadlock box configurations of cardinality K.
+	We do this for increasing K (up to some limit).
+	We may also have different generator algorithms.
+	During this we have "plenty" of memory, since all the configurations
+	within which the optimizer will search, later, are not yet allocated.
+
+(3) Convert the set of all deadlock box configuration into some compact
+    representation, which:
+    (a) is frozen (not not be extended or changed, anymore)
+    (b) is suitable to search for subsets of some larger box configuration
+        (with more than K boxes)
+    Only this data needs to survive this process / computation.
+
+(4) Build the set of box configurations in the vicinity of the base solution.
+    After this process the above data from (3) is not needed anymore...
+    except we want to reuse it for the next optimization computation.
+
+Step (4) is not part of this memo.
+
+-------------------------------------------------------------------------------
+We have two kinds of incoming data (parameterization), which may influence the
+data we build up, and hence does influence the time of its validity:
+(B) The board: all walls, all goals, and the initial configuration,
+    i.e. initial positions of boxes and player.
+    From this we can set up a "geometry" encoding.
+(S) The concrete solution to work on.  This may be only a fragment of a full
+    level solution, and that way may limit the possible placements of boxes
+    and the player.
+But when we allow for (S) to influence the computation or representation of
+the deadlock data, we also cannot reuse the deadlock data for the next
+optimization (of another solution on the same board).
+
+Currently we compute all deadlock data for the board/level in general, so that
+we can use it for all solutions (or solution fragments) of that board.
+That way we need no recomputation for iterated optimization.
+But this decision can be challenged.
+
+-------------------------------------------------------------------------------
+Example data (to get a feeling for it):
+
+B = 200      (number of box positions)
+E =  40      (number of boxes in a configuration, boxCount)
+K =   4      (cardinality of deadlock box configuration)
+
+Choose  4 from 200 =        64684950 (Log2 =    25.947)
+
+-------------------------------------------------------------------------------
+
+We separate all our deadlock data into parts with a fixed cardinality K of the
+involved box configurations.  The advantage of this is:
+  - Fixing the cardinality may help to have a more compact representation
+  - We want to use the results of the smaller cardinalities, while we compute
+    the larger cardinalities.  This sometimes saves huge amounts of data.
+FFS: We still sometimes have combinatorial explosions of data.
+
+-------------------------------------------------------------------------------
+What the final deadlock data has to do:
+
+The basic question which shall be answered by the computed deadlock data, is:
+
+--> Here I have a (full) box configuration, say X.  Tell me, please,
+    whether your deadlock data has some (reduced) box configuration, say S,
+    such that S is completely contained in my X ?
+
+Notes:
+  - The caller is not interested in the exact cardinality of S.
+    We still would first try to check against the smaller cardinality data.
+    It is smaller, faster to check, and has good chances to say "yes",
+    what terminates the search for an answer.
+  - The caller is not interested in the concrete box positions of S.
+    It is enough to know, that there IS such an S.
+
+But we can do even better.  Such a collection of deadlock data can become large
+(and we want to handle large amounts of info), and we would like to have
+some guidance that helps us not to scan the complete data set.
+
+The X, which the caller presents to us, is always computed by a push from
+some earlier box configuration Y, and we had been asked about Y, and we
+did say "no, no known deadlock in that Y".
+
+FFS: the above assertion about the computation of X can be challenged,
+     and the current optimizer has a comment about plans to change that.
+
+Now, since X is nearly identical to Y, except for one box, which changed
+its position, say from "a" in Y to "b" in X, we already know, that any
+deadlock subset S contained in X must have the element "b", at least.
+If it would not contain "b", it would only contain box positions which are
+common in X and Y, and had already been checked for Y.
+
+Hence, we have the modified question for the deadlock data:
+
+--> Here I have a (full) box configuration, say X, which contains a box at "p".
+    Does your deadlock data contain some S, which is contained in X ?
+    And also, if that helps you to be faster, you may restrict your search
+    to such S, that also contain at least that "p".
+
+The caller's typical context tells us something about the possible deadlock
+candidates we need to check.  But note, that this does NOT slice the deadlock
+data into disjunct parts (subsets of deadlock box configurations).
+Each deadlock box configuration of cardinality K is contained in K slices,
+not in just 1 of them.
+
+The current (2011-08) optimizer just creates copies of the deadlock box
+configurations, one copy for each of the K many contained "p" values.
+That may be improved upon, depending on the exact representation sizes.
+
+-------------------------------------------------------------------------------
+How to organize the final deadlock data...
+
+... that shall just answer the question discussed above?
+... Limited to just one K.
+
+This is not about the small details, it is about the search structure.
+Also, whether we already specialized to some contained "p", is not important
+in this section, so let us ignore that point for a while.
+
+We currently know of 3 different ways to do this:
+
+(A) Scan linearly: (search structure = array)
+    We have a linear collection of box configurations (of cardinality K),
+    e.g. an array, and scan just all members S, and always ask a subset
+    question: is S a subset of X ?
+    This subset question has to scan both sets, and can only stop that when
+    it finds an element in S that is not in X.
+    
+    This clearly can become time consuming, when there are many S, say 10000.
+    This is the classical (2011-08) implementation of JSoko.
+
+(B) Scan hierarchically: (search structure = tree)
+    We impose a search structure upon the collection of the sets S,
+    by grouping them by the value of the smallest (or largest) element in it.
+    We handle all these groups sequentially and separately.
+    Each group is structured in the same way, until we are down to a collection
+    of sets S, which are singletons, i.e. have cardinality 1.
+    We also scan the elements in X in the same order, in which we have
+    organized the sub-groups, say in increasing box position values.
+    If the next smallest box position contained in X is "q", we need not
+    look into any sub-group with a first value smaller as "q".
+    We look into the subgroup for "q", with X reduced by that "q",
+    and into all subgroups for values larger than "q"... with "x" also reduced.
+    A group for cardinality 1 is coded as a set, and the remaining question
+    is: has X some member "q" left, that is found in this set? That can be
+    considered a question, whether the intersection of both sets is empty.
+
+(C) Invert membership into counter array: (search structure = inverted array)
+    This is harder to explain, since it is not intuitive, and not a standard
+    technique.  [I (heiner) invented it on my own.]
+    
+    Consider the deadlock data to be a 2-dimensional array of bits.
+    Each row represents one S, and is B bits long.
+    That is a good picture for the linear array version in (A).
+    Each contained S can be "named" by its index in that array, i.e. can
+    be named by the row number.  Let us call that the ID of an S.
+    Now let us consider the columns in this picture...
+    Each column stands for one box position, and it enumerates the IDs of
+    those S, which contain that box position.
+    
+    Consider the data to be organized in columns...
+        initialize counter array C[] to zeroes.
+        foreach( boxpos q from X )
+            foreach( id from column[q] )
+                C[id]++
+    Now, each C[id] has the cardinality of the intersection of X with the S
+    identified by "id".  Each C[id] counts how many box positions are common
+    in X and S (as named by "id").
+    And S is completely contained in X, when its counter reaches the
+    maximal possible value K:
+        foreach( boxpos q from X )
+            foreach( id from column[q] )
+                if C[id] == (K-1) then terminate search with "deadlock found"
+                C[id]++
+    This way each counter need only implement the values 0..(K-1).
+    For K=4 each counter needs only 2 bits.  We can implement 32 of them
+    in just one (long).  (If K==1 we need no counters, at all.)
+    
+    The data to encode is just an array of "id" for all possible box positions.
+    How large an "id" can become depends on the amount of data we have
+    collected.
+
+The hard part of (C) is to efficiently implement the large array of small
+counters, including allocation, initialization and increment operation.
+
+In my program "csoso" I have found method (C) to be so superior to the other
+methods, that I have discarded implementations of (A) and (B).
+But it depends on cheap allocation in a non-thread-safe manner. Sigh.
+
+-------------------------------------------------------------------------------
+Encoding of box configurations:
+
+The classic implementation used in the optimizer is a bit vector implemented
+in a byte array (often a slice of a large byte array).
+This encoding has the advantages:
+  - memory requirements are the same, independent of the number of boxes.
+  - for high box densities (number boxes / number box positions) this is
+    most often the optimal encoding
+  - with no further effort we have a set normalization
+
+Another encoding is a list/array of box positions:
+  - must be sorted to implement uniqueness of representation
+  - is shorter for small cardinalities
+  - members are very easy to enumerate
+
+Since deadlock box configurations by construction contain only very few boxes,
+the encoding by a sorted position list may be preferable.  Example:
+    B=200: 200 bits = 25 bytes per box configuration
+    K=4:   4 shorts =  8 bytes per box configuration
+    May be, we could even go along with bytes, here.  200 < 255.
+
+The final data, if organized in columns, is independent, but the collection
+of the deadlock data may quite well want to use the better of the two
+encodings.
+
+-------------------------------------------------------------------------------
+Unsorted notes:
+
+- We shall mix different generators for the same K
+- Different generators have different limits
+- Per K the resulting data shall be askable in a thread safe manner
+- What about results for K==1 ?
+- Fight combinatorial explosion by runtime patterns?

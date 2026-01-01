@@ -1,0 +1,107 @@
+This is the "glossary" of "JSoko".
+This is an alphabetically sorted list of names, terms and abbreviations
+used in the sources, along with a short description of the intended meaning.
+
+accumulation
+	A kind of collection, which can grow, but does not shrink, except to
+	become completely empty.  The missing ability to delete single elements
+	helps the implementation to be more memory efficient (or e.g. thread safe).
+
+board
+	The main content of a level, the bare puzzle: walls, boxes, goals,
+	empty locations and the initial player position.
+	Augmented forms are used for all kinds of intermediate game situations.
+	The game "state".
+
+box
+	basic sokoban term: the objects to be pushed around ($)
+
+CF
+	= configuration
+
+collection
+	basic sokoban term: a series of "level"s, along with additional information
+	like the name of the collection, author and copyright.
+	May also contain solutions.
+
+collection
+	basic java term: a group of classes (data types) to implement Sets, Lists,
+	and similar groups of objects.  See also: accumulation
+
+configuration
+	Data that describes the state of a level (game), omitting the fixed parts.
+	Positions of all the boxes and the player.
+
+DB
+	data base
+
+e.g.
+	exempli gratia (Latin), for example, for instance
+
+etc.
+	et cetera (Latin), and so on
+
+FFS
+	= for further study
+	This is used as a task marker in the sources, weaker (less urgent)
+	than the better known "TODO" or "XXX" or "FIXME".
+	It should be added to the Eclipse configuration.
+	Often extended by the initials of the author, like: "FFS/hm: notice by hm"
+
+goal
+	basic sokoban term: location where a box should end up (.)
+
+hm
+	developer initials for: Heiner Marxen
+
+i.e.
+	id est (Latin), that is
+
+level
+	basic sokoban term: a board and some additional information like name,
+	author and copyright.
+
+LURD
+	L=left U=up R=right D=down
+	Encoding method for solutions as a sequence of moves.
+	Upper case for pushes, lower case for non-pushes.
+
+mm
+	developer initials for: Matthias Meger
+
+move
+	basic sokoban term: the action of the player to do a step (in one of the
+	four possible directions).
+	Sometimes used to exclude "pushes", but mostly includes "pushes".
+
+NB
+	= nota bene (Latin), English: note well, take notice
+
+player
+	basic sokoban term: the active part of the game, pushing around boxes (@)
+
+pull
+	a "push" in reverse.  Happens for search direction "backwards"
+
+push
+	basic sokoban term: the action of the player to do a step and changing
+	the location of a box
+
+RLE
+	= run length encoding
+	Can be used for levels and solutions.
+
+search direction
+	Can be "forward" or "backward".  Most aspects of a sokoban level can be
+	inverted in direction, i.e. we may search from the configuration with
+	all boxes on all goals towards all boxes on all start positions.
+
+solution metric
+	A specific way to measure the length of a solution.
+	See "solutionMetrics.txt".
+
+TF
+	text field (graphic component)
+
+wall
+	basic sokoban term: marks locations forbidden for player and boxes (#)

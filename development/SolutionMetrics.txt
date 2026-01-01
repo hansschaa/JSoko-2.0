@@ -1,0 +1,182 @@
+This file is about the metrics of sokoban solutions.
+
+With a solution metric we measure the "length" of a solution (and judge the
+shorter solution to be "better").  More exactly, we do not insist in full
+solutions, we also measure any (legal) series of steps (moves, pushes),
+which may be part of some solution.
+
+DEFINITIONS
+===========
+
+The following 6 basic solution metrics are well known:
+
+(1)	moves
+	Every player movement, including pushing ones, counts as a "move".
+	LURD: the total length of the LURD-string.
+	
+(2) pushes
+	Those player movements, which also move a box, count as a "push".
+	LURD: the number of upper case letters.
+	
+(3) box lines
+	A series of pushes of the same box in the same direction is a "box lines".
+	LURD: the number of contiguous series of the same upper case letter.
+	
+(4) box changes
+	If a pushing player movement pushes another box than the last pushing
+	player movement before, then we have a "box change", regardless of the
+	amount of non-pushing player moves between those pushes.
+	The first push of a box is also considered a "box change".
+
+(5) pushing sessions
+	A series of pushes without any non-pushing move in it, is a "pushing session".
+	LURD: the number of contiguous series of arbitrary upper case letters.
+	
+(6) player lines
+	A series of player movements into the same direction, ignoring whether
+	they are pushing a box or not, is a "player line".
+	LURD: the number of contiguous series of the same letter, ignoring case.
+
+The first 2 metrics, "moves" and "pushes", are called "major" solution metrics.
+The other 4 are called "minor" metrics.
+
+We (JSoko) use the following abbreviations for the basic solution metrics:
+(1)	[mo] = moves
+(2) [pu] = pushes
+(3) [bl] = box lines
+(4) [bc] = box changes
+(5) [ps] = pushing sessions
+(6) [pl] = player lines
+
+A "combined" solution metric is a series of basic solution metrics, with no
+repetitions, with the most important basic metric first.  The most usual
+ones are:
+(M) = ([mo], [pu], [bl], [bc], [ps], [pl])
+(P) = ([pu], [mo], [bl], [bc], [ps], [pl])
+These 2 combined solution metrics are used e.g. by the "sokobano" web site.
+
+PROPERTIES
+==========
+
+We know some properties of basic solution metrics:
+
+-->	[mo] is the only "constant" metric.  Adding one more step to a solution
+	increments the value for [mo] always by exactly +1.
+	
+--> All other metrics change their value by either +0 or by +1, when we add
+	another step to some solution prefix.
+
+==> [mo] dominates all other basic metrics: [mo] is always an upper bound for
+	all other metrics.
+
+--> [mo] and [pu] are the only basic metrics, which are "context-free".
+	A metric is called "context-free" if it is sufficient to know the metric
+	value of a configuration and the next step to compute the metric value
+	of any solution that is extended by that step.
+
+Since this is the basic operation of an optimizer:
+	Given a configuration and the metric value used to reach it, compute
+	follow-up configurations by adding a step to the configuration, and
+	also compute the metric value of that follow-up configuration.
+we need more information about the path which reached that configuration
+in order to compute an increment of any not context-free solution metric.
+
+COMPUTATIONS
+============
+
+Computation of all the metric values for a solution is done in method
+sokoban.leveldata.solutions.Solutions.verifySolution().
+
+The most important other computation with metric values is to extend a
+solution prefix with another piece of a solution.
+The most important case is the special case that we extend a solution
+prefix by exactly one further step.
+
+--> Given a solution prefix p with value v of some metric M, we want to
+	extend the solution by legal move x, of which we know its direction
+	and whether it is a push (i.e. we know its LURD-char),
+	we want to compute the value v' of the extended prefix p' = (p,x)
+	for that same metric M.
+
+In order to do that distance update computation, we have to inspect the
+prefix p, when M is a minor solution metric.
+
+An optimizer, which has to do this metric computation very frequently,
+would like to handle the configurations c, which result from p, at best
+independent of p.  For minor metrics we cannot be independent of the
+exact way how we reached configuration c, but we still can handle many
+prefixes p that lead to c in the same way.
+
+Hence we have a look at the exact information, which is needed from a
+solution prefix such that we can update a metric value v for metric M
+(for extending by any LURD-char):
+
+[mo] nothing: we always increment by +1
+
+[pu] nothing: we increment by +1 for pushes "LURD" and by +0 for "lurd"
+
+[bl] We need to know, whether we are extending a box line (+0), or whether
+     we start a new box line (+1), or may be we are just between 2 box lines (0)
+     We have to discriminate the +1 case from the rest.
+     We start a new box line, if we extend by an upper case letter "LURD" and
+     (a) the last LURD char of the solution prefix p was lower case, or
+     (b) the last LURD char of p was upper case but differs from x, or
+     (c) the last LURD char of p does not exist, since p is empty.
+     So we have to distinguish 5 cases:
+     Case (1)..(4): the last LURD-char of p was "L", "U", "R" or "D"
+     Case (5):      everything else
+
+[bc] We need to know, which box has been pushed last, to match it against
+     the box pushed by x, or whether there were no push inside prefix p,
+     matching no possible box pushed by x.  We have to distinguish at least
+     as many cases as there are boxes in the configuration, so we can just
+     number them, and remember the number.  That is a minimal implementation:
+     Case (1)..(n): the last push moved box number n
+     Case (n+1):    there was no push inside the prefix
+
+[ps] For x being a pushing move, we need to know, whether the last move from
+     the solution prefix p was a push (+0) or a non-push or missing (+1).
+     We have to distinguish 2 cases:
+     Case (1): the last LURD-char was one of "LURD"
+     Case (2): everything else
+
+[pl] We need to know the direction of the last move, to match against the
+     direction of x, or whether there were no last move (does not match any x).
+     Case (1): the last-LURD char was one of "lL"
+     Case (2): the last-LURD char was one of "uU"
+     Case (3): the last-LURD char was one of "rR"
+     Case (4): the last-LURD char was one of "dD"
+     Case (5): there was no last LURD-char (empty p)
+ 
+ For 3 of the 4 minor metrics it is sufficient to know something about the
+ last LURD-char of the prefix p, the rest of p is irrelevant.  We have to
+ distinguish at most 9 cases for all 3 together: 8 LURD-chars and "empty p".
+ 
+ Metric [bc] is different.  It does not share information with the other
+ metrics, and the number of cases to distinguish is (n+1) when there are
+ n boxes in the level.  Hence, the amount of information to store is not
+ fixed, but rather depends on the level.
+ 
+ The working term for this additional information is "PlugValue", since we
+ plug it at either end of a partial solution path, to summarize the content
+ of that path.  Then we transfer such a plug value to the configuration,
+ which we usually us to represent the outcome of some solution path,
+ and handle this pair as a "completed" solution.
+ 
+ While the configuration itself is sufficient to determine the further legal
+ play from there, the PlugValue is sufficient to also update metric values
+ for all those play continuations.
+ 
+ Now, the typical optimizer situation is:
+ 	(1) we have a configuration C (with player position and box positions)
+ 	(2) we have a metric value V, the distance needed to reach C.
+ 		It may be attached to a complete set of configurations, instead of
+ 		being attached to each individual configuration (positional encoding).
+	(3) we have a PlugValue pv for C (attached to each C), summarizing the
+		path with which we reached C.
+	
+	(4) Now we want to compute up to 4 successor configurations C', with
+		updated metric value V' and accompanied by an updated PlugValue pv'.
+
+That is the most basic operation in an optimizer that optimizes for a full
+solution metric (not just 1 or 2 of the 6 metrics).

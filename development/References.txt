@@ -1,0 +1,124 @@
+This file shall collect references and links to various kinds of texts,
+which may be useful for the JSoko developer.  Even when the reference
+is already put into the source (as a comment), it may be a good idea
+to also put it here, as that way we get a good literature overview.
+
+Java language
+    --> http://en.wikipedia.org/wiki/Java_(programming_language)
+    
+    The Java language specification:
+    --> http://java.sun.com/docs/books/jls/
+    --> The Java™ Language Specification, Third Edition
+		James Gosling, Bill Joy, Guy Steele and Gilad Bracha
+		ISBN 0-321-24678-0
+
+	A high quality series of Java lections.
+	--> http://www.angelikalanger.com/Articles/EffectiveJava.html
+	
+	Code Conventions for the Java Programming Language (by Sun)
+	--> http://www.oracle.com/technetwork/java/codeconv-138413.html
+	
+	Java Coding Style Guide (by Sun)
+	--> http://developers.sun.com/sunstudio/products/archive/whitepapers/java-style.pdf
+	
+	Java coding style guide of Apache ACE:
+	--> http://incubator.apache.org/ace/java-coding-style-guide.html
+	
+	Performance tools
+	--> http://java.sun.com/performance/jvmstat/
+	
+Java documentation comments (tool "javadoc")
+    --> http://en.wikipedia.org/wiki/Javadoc
+     
+    The original specification on documentation comments, Chapter 18,
+    Documentation Comments, in the Java Language Specification, First Edition,
+    by James Gosling, Bill Joy, and Guy Steele.
+    (This chapter was removed from the second edition.)
+    --> http://java.sun.com/docs/books/jls/first_edition/html/18.doc.html
+     
+    Howto and Style guide from Sun: "How to Write Doc Comments for the Javadoc Tool"
+    --> http://www.oracle.com/technetwork/java/javase/documentation/index-137868.html
+
+Third party software
+	The database used by JSoko.
+	--> http://hsqldb.org/
+	
+	An eclipse plugin for HSQLDB:
+	--> http://quantum.sourceforge.net/how_to_install.html
+	The eclipse repository for it:
+	--> http://quantum.sourceforge.net/update-site
+	
+	Jide provides improved widgets we use, like "JideTitledBorder" or
+	"AutoCompletionComboBox".  	Jide source code (e.g. to attach them):
+	--> http://java.net/projects/jide-oss/downloads/directory/3.2.1
+	
+	BASE64 decoding:
+	We need decoding (not encoding) in "Skin.java" to grok ".skn" files.
+	Currently (2011-08-28) we use class "sun.misc.BASE64Decoder",
+	but that class should not be used, because it is not official and may vanish.
+	--> http://www.docjar.com/docs/api/sun/misc/BASE64Decoder.html
+		states that its operation is defined by RFC 1521
+	--> http://www.oracle.com/technetwork/java/faq-sun-packages-142232.html
+		explains why not to use such a class from "sun.*".
+	--> http://www.source-code.biz/base64coder/java/
+	--> http://www.source-code.biz/base64coder/java/Base64Coder.java.txt
+		Offers "an open-source Base64 encoder/decoder".
+		Apparently it can be found in the "Apache Maven" repository.
+	--> http://commons.apache.org/codec/
+		Appears to offer an implementation based on RFC 2045.
+		Sounds even better. (classes Base64 and BCodec)
+		More hinted classes:
+		--> org.apache.axiom.om.util.Base64
+		--> org.apache.axis.encoding.Base64
+	--> http://www.asgarli.net/2011/03/replacing-sunmiscbase64encoder-and.html
+		is a recent report from the real world about replacing the sun class.
+
+Publications that reference JSoko
+	--> http://larc.unt.edu/techreports/LARC-2011-01.pdf
+	--> http://weetu.net/Timo-Virkkala-Solving-Sokoban-Masters-Thesis.pdf (PI-corral detection of JSoko)
+
+Unicode matters
+    Ellipsis (triple dot):
+    --> http://en.wikipedia.org/wiki/Ellipsis#Computer_representations
+    
+    U+00C4 = A umlaut     (Ä)
+    U+00D6 = O umlaut     (Ö)
+    U+00DC = U umlaut     (Ü)
+    U+00DF = eszett       (ß)
+    U+00E4 = a umlaut     (ä)
+    U+00EB = e + diaresis (ë)
+    U+00F6 = o umlaut     (ö)
+    U+00FC = u umlaut     (ü)
+    U+2026 = ellipsis     (…)
+ 
+Sokoban terms
+    --> http://sokobano.de/wiki/index.php?title=Main_Page
+    
+    Secondary solution metrics:
+        --> http://sokobano.de/wiki/index.php?title=Moves_vs._Pushes
+ 
+Bipartite matching
+ 	Is also known as "the assignment problem".
+ 	For Sokoban we may be interested in both kinds of algorithm:
+ 	(a) check whether there exists some bipartite matching
+ 	(b) find a minimum weight bipartite matching
+ 	
+ 	--> http://en.wikipedia.org/wiki/Auction_algorithm
+ 		Mentions the work of Dimitri P. Bertsekas. No algorithm details.
+ 	--> http://en.wikipedia.org/wiki/Dimitri_Bertsekas
+ 	--> http://web.mit.edu/dimitrib/www/home.html
+ 		Home page of Dimitri P. Bertsekas.
+ 	--> http://web.mit.edu/dimitrib/www/publ.html
+ 	--> http://web.mit.edu/dimitrib/www/net.html
+ 		His book: " Linear Network Optimization", MIT Press, 1991
+ 		Chapter 4, Auction Algorithms
+ 		--> http://web.mit.edu/dimitrib/www/LNets_Chapter%204.pdf
+ 		 	
+ 	--> http://de.wikipedia.org/wiki/Paarung_(Graphentheorie)
+ 	--> http://en.wikipedia.org/wiki/Matching_(graph_theory)
+ 	
+ 	FFS: split into connected components
+ 
+ Work stealing
+ 	--> http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.170.1097&rep=rep1&type=pdf
+	--> http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.115.1715&rep=rep1&type=pdf

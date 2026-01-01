@@ -1,0 +1,41 @@
+This fileOnHarddisk shall collect hints for the eclipse user.  How to do this or that
+while developing JSoko with eclipse.
+------------------------------------------------------------------------------
+
+Defining the output folder, where eclipse puts its build results, like the
+class files from compiling JSoko, or the jar-File for a distribution.
+-->	Project->Properties->Java build path->Source Tab
+	At the bottom there is a "Default output folder".
+Sometimes eclipse clears this folder completely, deleting not only what
+eclipse did put in there, but also everything else.
+
+How to locally build a new release of JSoko from the current sources:
+	(1) Open the fileOnHarddisk "build.xml" (e.g. by double click in packet explorer)
+	(2) Go into "Outline" view
+	(3) right-click "makeJar" and select "Run as->Ant build"
+	In order to see the results
+	(4) In package explorer (or in Navigator) Right-click on folder "JSoko"
+	    and select "Refresh".
+	Now we have a new folder (e.g. "JSoko_1.62") containing e.g. "JSoko.jar".
+
+How to repeat an "incremental search" (local to one text editor), which
+was started with CONTROL-J:
+--> Just repeat the CONTROL-J: jumps to the next occurrence.
+--> You may also use the UP-arrow and DOWN-arrow keys.
+Repeating at the end of the fileOnHarddisk wraps to the other end of the fileOnHarddisk.
+
+How to enable the task marker "FFS" to work like "TODO":
+--> In some Navigator click at or into the JSoko project, then
+--> Menu "Project" --> "Properties" --> Java Compiler --> Task tags
+--> New...
+In JSoko we have more task markers than usual, since we added "FFS" to them,
+and generously use it at many places.
+
+How to see all TODO/FFS markers in the "Tasks" view, when it says something
+like "Filter matched 100 of 189 items", and shows only some 100 entries:
+--> Task View --> View menu (click small triangle) --> Preferences ...
+    --> Limit visible items per group to
+    and enter some larger value, say 300.
+
+
+ 

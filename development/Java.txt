@@ -1,0 +1,128 @@
+This is the java note book of "JSoko".
+Here we collect some aspects of the language, which are not trivial or obvious
+for some, and have participated in the development somewhere.
+This is neither a tutorial nor a language reference nor complete in any sense,
+it is just a collection of notes some developer found noteworthy.
+
+===============================================================================
+
+JLS = The Java™ Language Specification, Third Edition
+	James Gosling, Bill Joy, Guy Steele and Gilad Bracha
+	ISBN 0-321-24678-0
+
+===============================================================================
+
+array index:
+	The language does restrict array indices to the non-negative values of
+	type "int".
+
+	--> JLS §10.3
+	Although I could use an array index with value Integer.MAX_VALUE,
+	I do not see a way to create an array with "length" larger than (2**31)-1.
+	That restricts array indexes to at most (2**31)-2.
+	The largest array with a power of 2 size has dimension 2**30 (1<<30).
+
+checked exceptions:
+	Some exceptions have to be declared by a "throws" clause, but some not.
+	
+	Error,            and extended classes: need NO "throws"
+	Exception,        and extended classes: need  a "throws", except...
+	RuntimeException, and extended classes: need NO "throws"
+
+object overhead
+	We estimate the memory overhead of an object to be the size of 2 pointers.
+	On a 64-bit computer this are already 16 bytes.
+
+javadoc for a package
+	We may write a javadoc a overview for a complete package by creating file
+	"package-info.java" directly in the package folder.
+	This way is to prefer over the older "package.html" file.
+	The file shall contain just a javadoc comment, and a package statement.
+	In order to generate clickable links for classes we have to use the
+	fully qualified class name (with dots inside).
+
+bit vector
+	In package java.util we have class "BitSet", which provides something
+	similar to a vector of bits (implemented as long[]).
+	This is NOT a set of bits, but rather a set of (small) non-negative int's.
+
+shift counts
+	Shifting (<<, >>, >>>) an (int) takes only the low 5 bits of the shift
+	count, shifting a long takes only the low 6 bits of the shift count.
+	--> JLS §15.19
+
+bit twiddling
+	Some "bit twiddling" operations can be found in classes Integer and Long,
+	e.g. number of high/low zeros, and a "population count" (count 1-bits).
+
+volatile
+	For exact semantics see --> JLS §8.3.1.4
+	See also: package "java.util.concurrent.atomic".
+
+arrays as Object
+	Can arrays be used as an instance of class Object?  See JLS §10.7 ...
+	Yes, java allows that.  We did so already: e.g. variable
+	"distancesBufferForwards" in sokoban.board.Board.Distances was a
+	Vector<Object> and got added data like boolean[] or short[][].
+	
+	What is the "hashCode()" of arrays?  I suspect System.identityHashCode(),
+	which may be basically independent from the contents of the array.
+	JLS §10.7 states that method hashCode() is inherited from Object.
+	That makes arrays a bad candidate for elements in collection types.
+	
+	In class java.util.Arrays we find static methods which help to compute
+	hash codes for the content of (complete) arrays of basic types.
+	But array slices (offset,length) are not supported, there.
+
+modifier order
+	This is a style topic: should I say "final static" or "static final"?
+	Here is the recommendation from the Java Coding Style Guide (by Sun):
+	--> Order of class modifiers: public abstract final
+	--> Order of method modifiers:
+		public protected private  abstract  static  final  synchronized native
+		A mnemonic could be "PASFY":
+			P = public protected private
+			A = abstract
+			S = static
+			F = final
+			Y = sYnchronized
+
+sub-package	
+	Packages are organized hierarchically, which is a good thing.
+	But regarding the Java visibility rules they are all stand-alone.
+	Methods in a class in package "sokoban" do not "see" more or less from
+	classes in package "sokoban.board" than in package "foo.bar".
+
+annotation element types
+	JLS §9.6 (p. 273) states:
+		one of the primitive types, String, Class and any invocation of Class,
+		an enum type (§8.9), an annotation type, or an array (§10)
+		of one of the preceding types.
+
+arithmetic exceptions
+	JLS §4.2.2 (p. 37) states:
+		The built-in integer operators do not indicate overflow or underflow
+		in any way. Integer operators can throw a NullPointerException if
+		unboxing conversion (§5.1.8) of a null reference is required.
+		Other than that, the only integer operators that can throw an exception
+		(§11) are the integer divide operator / (§15.17.2) and the integer
+		remainder operator % (§15.17.3), which throw an ArithmeticException
+		if the right-hand operand is zero, and the increment and decrement
+		operators ++(§15.15.1, §15.15.2) and --(§15.14.3, §15.14.2),
+		which can throw an OutOfMemoryError if boxing conversion (§5.1.7)
+		is required and there is not sufficient memory available to perform
+		the conversion.
+
+for statement: multiple variables
+	JLS §14.14 (p. 384) states, that multiple local variables can be introduced
+	by one "LocalVariableDeclaration", e.g.:
+		for( int i=0, j=31 ; i<j ; ++i, --j) ...
+	Differently typed variables are not possible, here.
+		
+===============================================================================
+Unsorted (not yet expanded) headwords:
+
+- compact mem: arr only
+- unsigned shifts
+- test after bit-op (promotions)
+- semantics of nested modifiers
