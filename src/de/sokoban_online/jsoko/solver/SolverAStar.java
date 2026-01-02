@@ -36,6 +36,7 @@ import de.sokoban_online.jsoko.resourceHandling.Settings.SearchDirection;
 import de.sokoban_online.jsoko.resourceHandling.Texts;
 import de.sokoban_online.jsoko.utilities.Debug;
 import de.sokoban_online.jsoko.utilities.Utilities;
+import java.util.List;
 
 
 /**
@@ -229,205 +230,279 @@ public class SolverAStar extends Solver {
 
 
     /**
-     * Generates successor configurations by performing all legal pushes.
-     * Each generated configuration is stored in the hash table.
-     * Had the configuration already been reached by a push, we skip it.<br>
-     * After the solution has been found the solution path is put into the
-     * movementHistory by calling method {@link #optimizeSolution()}
-     * inside method {@link #searchSolution()}.
-     *
-     * @return <code>true</code> if a solution is found, and<br>
-     *        <code>false</code> if no solution is found
-     */
-    protected boolean forwardSearch() {
+    * Generates successor configurations by performing all legal pushes.
+    * Each generated configuration is stored in the hash table.
+    * Had the configuration already been reached by a push, we skip it.
+    */
+   protected boolean forwardSearch() {
 
-        // Nimmt eine Kistenposition auf
-        int boxPosition;
+       int totalChildren = 0;
+       int totalEffectiveChildren = 0;
 
-        // Nimmt die mögliche neue Kistenposition auf
-        int newBoxPosition = 0;
+       // === HANS: métricas globales adicionales ===
+       int minBranchingReal = Integer.MAX_VALUE;
+       int maxBranchingReal = -1;
 
-        // Stellungobjekt, dass die aktuelle Stellung aufnimmt
-        IBoardPosition currentBoardPosition;
+       int minBranchingEffective = Integer.MAX_VALUE;
+       int maxBranchingEffective = -1;
 
-        IBoardPosition boardPositionToBeAnalyzed;
+       long repeatedChildren = 0;
+       // ==========================================
 
-        // Nimmt den Status einer Stellung auf
-        IBoardPosition oldBoardPosition;
+       System.out.println("forwardSearch A Star");
 
-        // Nimmt den aktuellen Lowerbound einer Stellung auf
-        int lowerBoundCurrentBoardPosition = 0;
+       int boxPosition;
+       int newBoxPosition = 0;
 
-        // In diesem Bitarray sind die mit den Kistennummern korrespondierenden Bits gesetzt,
-        // wenn diese Kiste für weitere Pushes relevant ist.
-        boolean[] relevantBoxes = null;
+       IBoardPosition currentBoardPosition;
+       IBoardPosition boardPositionToBeAnalyzed;
+       IBoardPosition oldBoardPosition;
 
-        // Die Stellung mit der geringsten geschätzten Lösungspfadlänge weiter untersuchen
-        while((boardPositionToBeAnalyzed = getBestBoardPosition()) != null && !isCancelled()) {
+       int lowerBoundCurrentBoardPosition = 0;
+       boolean[] relevantBoxes = null;
 
-            // Das Spielfeld mit der aktuellen Stellung besetzen
-            board.setBoardPosition(boardPositionToBeAnalyzed);
+       while((boardPositionToBeAnalyzed = getBestBoardPosition()) != null && !isCancelled()) {
 
-            // Only for debugging: show board positions.
-            if(solverGUI.isShowBoardPositionsActivated.isSelected()) {
-                displayBoard();
-            }
+           application.movesHistory.iterations++;
+           application.movesHistory.localExpandedNodes++;
 
-            // Erreichbare Felder des Spielers ermitteln. Da diese Felder auch nach der Deadlock-
-            // prüfung noch gebraucht werden, werden sie in einem eigenen Objekt berechnet.
-            playersReachableSquares.update();
+           // === HANS: contadores por expansión (solo para min/max global) ===
+           int childrenThisExpansion = 0;
+           int effectiveChildrenThisExpansion = 0;
+           // ===============================================================
 
-            // Falls das Level eine Zielraumlösung hat, so wird der Zielraum mit der vorberechneten
-            // Lösung gelöst. Falls dadurch das Level insgesamt gelöst wurde wird sofort mit true
-            // zurückgesprungen.
-            // Da die Blockerkisten noch von der letzten Stellung gesetzt sind müssen sie und die
-            // Kistendistanzen neu ermittelt werden.
-            if(goalRoomSolutionPath != null) {
-                board.boxData.setAllBoxesNotFrozen();
-                deadlockDetection.freezeDeadlockDetection.isDeadlock(board.boxData.getBoxPosition(0), true);
-                board.distances.updateBoxDistances(SearchDirection.FORWARD, true);
-                boardPositionToBeAnalyzed = pushBoxGoalRoomLevel(boardPositionToBeAnalyzed);
+           board.setBoardPosition(boardPositionToBeAnalyzed);
 
-                // Falls es keine weitere zu untersuchende Stellung gibt, bedeutet das, dass das
-                // Level gelöst wurde.
-                if(boardPositionToBeAnalyzed == null) {
-                    return true;
-                }
-            }
+           if(solverGUI.isShowBoardPositionsActivated.isSelected()) {
+               displayBoard();
+           }
 
-            // Get the number of the last pushed box: this may also be the last pushed box by the goal room level method!
-            int pushedBoxNo = boardPositionToBeAnalyzed.getBoxNo();
+           playersReachableSquares.update();
 
-            // Ermitteln, welche Kisten für den nächsten Push relevant sind.
-            relevantBoxes = identifyRelevantBoxes();
+           if(goalRoomSolutionPath != null) {
+               board.boxData.setAllBoxesNotFrozen();
+               deadlockDetection.freezeDeadlockDetection
+                   .isDeadlock(board.boxData.getBoxPosition(0), true);
 
-            // If no box has been pushed the pushed box number is set to -1, so the tunnel detection isn't performed.
-            if(pushedBoxNo == NO_BOX_PUSHED) {
-                pushedBoxNo = -1;
-            }
+               board.distances.updateBoxDistances(SearchDirection.FORWARD, true);
+               boardPositionToBeAnalyzed =
+                   pushBoxGoalRoomLevel(boardPositionToBeAnalyzed);
 
-            // Nun muss geprüft werden, welche Kisten in welche Richtungen verschoben werden können
-            // -> welche neuen Stellungen können erzeugt werden
-            for(int boxCounter = -1, boxNo; boxCounter < board.boxCount; boxCounter++) {
+               if(boardPositionToBeAnalyzed == null) {
+                   System.out.println("->>>>>>>> haaaaaaaaaaaaaaaaans");
+                   int depth = solutionBoardPosition.getPushesCount();
 
-                //The box pushed last time is pushed first (when boxCounter is -1) for tunnel detection.
-                if(boxCounter == pushedBoxNo) {
-                    continue;
-                }
+                   application.movesHistory.branchingReal =
+                       (double) totalChildren / application.movesHistory.localExpandedNodes;
 
-                // Die erste Kiste ist immer die im letzten Zug verschobene Kiste, es sei denn
-                // es gibt keinen letzten Zug (Anfangsstellung = AbsoluteStellung = gibt -1 zurück)
-                if(boxCounter == -1) {
-                    boxNo = pushedBoxNo;
+                   application.movesHistory.branchingEffective =
+                       (double) totalEffectiveChildren / application.movesHistory.localExpandedNodes;
 
-                    // Falls sich die verschobene Kiste in einem Tunnel befindet und nicht auf einem
-                    // Zielfeld steht, brauchen für diesen Push nur Verschiebungen dieser Kiste
-                    // geprüft werden!
-                    // (Es kann nur die verschobene Kiste in einem Tunnel stehen, da alle anderen
-                    // ja schon vorher weitergeschoben worden wären!)
-                    if(isBoxInATunnel(pushedBoxNo, boardPositionToBeAnalyzed.getDirection())) {
-                        boxCounter = board.boxCount;
-                    }
-                } else {
-                    boxNo = boxCounter;
-                }
+                   application.movesHistory.branchingClassic =
+                       Math.pow(application.movesHistory.localExpandedNodes, 1.0 / depth);
 
-                // Falls es kein Tunnel ist, so wird geprüft, ob ein I-Corral vorliegt. In diesem Fall
-                // können die nicht relevanten Kisten übersprungen werden.
-                // (Bei einem Tunnel wird sowieso nur eine Kiste verschoben, so dass auch ein I-Corral
-                // die Anzahl der zu verschiebenen Kisten nicht mehr reduzieren könnte)
-                if(boxCounter < board.boxCount && relevantBoxes != null && !relevantBoxes[boxNo]) {
-                    continue;
-                }
+                   application.movesHistory.totalChildren = totalChildren;
+                   application.movesHistory.totalEffectiveChildren = totalEffectiveChildren;
 
-                // Kistenposition holen
-                boxPosition = board.boxData.getBoxPosition(boxNo);
+                   application.movesHistory.minBranchingReal = minBranchingReal;
+                   application.movesHistory.maxBranchingReal = maxBranchingReal;
 
-                // Falls die Kiste im Zielraum liegt, so wird sie durch die spezielle Zielraumlogik verschoben.
-                if(goalRoomSquares != null && goalRoomSquares[boxPosition]) {
-                    // Falls die Kiste in einem Tunnel steht müssen die anderen Kisten trotzdem
-                    // untersucht werden, da die aktuelle Kiste ignoriert wird.
-                    if(boxCounter == board.goalsCount) {
-                        boxCounter = -1;
-                    }
-                    continue;
-                }
+                   application.movesHistory.minBranchingEffective = minBranchingEffective;
+                   application.movesHistory.maxBranchingEffective = maxBranchingEffective;
 
-                // Verschieben in jede Richtung prüfen
-                for(int direction = 0; direction < 4; direction++) {
-                    // Mögliche neue Position der Kiste errechnen
-                    newBoxPosition = boxPosition + offset[direction];
+                   application.movesHistory.repeatedNodes = repeatedChildren;
+                   application.movesHistory.redundancy =
+                       (repeatedChildren > 0)
+                           ? (double) totalChildren / repeatedChildren
+                           : 0.0;
 
-                    // Falls Kiste nicht in die gewünschte Richtung verschoben werden kann,
-                    // sofort die nächste Richtung probieren (kommt Spieler auf richtige Seite
-                    // und ist Zielfeld kein simple Deadlockfeld wird geprüft)
-                    if(!playersReachableSquares.isSquareReachable(boxPosition - offset[direction])
-                        || !board.isAccessibleBox(newBoxPosition)) {
-                        continue;
-                    }
+                   SaveSearchAlgorithmStadistics();
+                   return true;
+               }
+           }
 
-                    // Push durchführen und den Spieler auch auf das alte Kistenfeld setzen
-                    board.pushBox(boxPosition, newBoxPosition);
-                    board.playerPosition = boxPosition;
+           int pushedBoxNo = boardPositionToBeAnalyzed.getBoxNo();
+           relevantBoxes = identifyRelevantBoxes();
 
-                    // Objekt der aktuellen Stellung erzeugen (mit Referenz zur vorigen Stellung)
-                    currentBoardPosition = new RelativeBoardPosition(board, boxNo, direction, boardPositionToBeAnalyzed);
-                    currentBoardPosition.setSearchDirection(SearchDirection.FORWARD);
+           if(pushedBoxNo == NO_BOX_PUSHED) {
+               pushedBoxNo = -1;
+           }
 
-                    // Prüfen, ob diese Stellung bereits schon einmal erreicht wurde, indem versucht
-                    // wird sie aus dem Stellungsspeicher zu lesen
-                    oldBoardPosition = positionStorage.getBoardPosition(currentBoardPosition);
+           for(int boxCounter = -1, boxNo; boxCounter < board.boxCount; boxCounter++) {
 
-                    // Falls die Stellung bereits vorher erreicht wurde, kann sie verworfen werden.
+               if(boxCounter == pushedBoxNo) {
+                   continue;
+               }
+
+               if(boxCounter == -1) {
+                   boxNo = pushedBoxNo;
+
+                   if(isBoxInATunnel(pushedBoxNo,
+                           boardPositionToBeAnalyzed.getDirection())) {
+                       boxCounter = board.boxCount;
+                   }
+               } else {
+                   boxNo = boxCounter;
+               }
+
+               if(boxCounter < board.boxCount &&
+                  relevantBoxes != null &&
+                  !relevantBoxes[boxNo]) {
+                   continue;
+               }
+
+               boxPosition = board.boxData.getBoxPosition(boxNo);
+
+               if(goalRoomSquares != null && goalRoomSquares[boxPosition]) {
+                   if(boxCounter == board.goalsCount) {
+                       boxCounter = -1;
+                   }
+                   continue;
+               }
+
+               for(int direction = 0; direction < 4; direction++) {
+
+                   // === Branching real ===
+                   totalChildren++;
+                   childrenThisExpansion++;
+
+                   newBoxPosition = boxPosition + offset[direction];
+
+                   if(!playersReachableSquares
+                           .isSquareReachable(boxPosition - offset[direction])
+                       || !board.isAccessibleBox(newBoxPosition)) {
+                       continue;
+                   }
+
+                   board.pushBox(boxPosition, newBoxPosition);
+                   board.playerPosition = boxPosition;
+
+                   currentBoardPosition =
+                       new RelativeBoardPosition(board, boxNo, direction,
+                                                 boardPositionToBeAnalyzed);
+                   currentBoardPosition.setSearchDirection(SearchDirection.FORWARD);
+
+                   oldBoardPosition =
+                       positionStorage.getBoardPosition(currentBoardPosition);
+
+                   /*if(oldBoardPosition != null) {
+                       // === HANS: redundancia ===
+                       repeatedChildren++;
+                       // =======================
+
+                       board.pushBoxUndo(newBoxPosition, boxPosition);
+                       continue;
+                   }*/
+                   
                     if(oldBoardPosition != null
-                            && oldBoardPosition.getPushesCount() <= currentBoardPosition.getPushesCount()) {
-                        // Push der Kiste rückgängig machen. Der Spieler wird sowieso beim nächsten
-                        // Aufruf wieder umgesetzt. Dies muss hier also nicht extra geschehen.
-                        board.pushBoxUndo(newBoxPosition, boxPosition);
-                        continue;
+                            && oldBoardPosition.getPushesCount() <= currentBoardPosition.getPushesCount()){
+
+                            repeatedChildren++;
+                            board.pushBoxUndo(newBoxPosition, boxPosition);
+                            continue;
+                        
                     }
 
-                    // Es wurde eine neue Stellung erreicht, deren Lowerbound nun errechnet wird.
-                    lowerBoundCurrentBoardPosition = lowerBoundCalcuation.calculatePushesLowerBound(newBoxPosition);
+                   lowerBoundCurrentBoardPosition =
+                       lowerBoundCalcuation
+                           .calculatePushesLowerBound(newBoxPosition);
 
-                    // Push der Kiste rückgängig machen. Der Spieler wird sowieso beim nächsten
-                    // Aufruf wieder umgesetzt. Dies muss hier also nicht extra geschehen.
-                    board.pushBoxUndo(newBoxPosition, boxPosition);
+                   if(lowerBoundCurrentBoardPosition
+                           == LowerBoundCalculation.DEADLOCK) {
+                       application.movesHistory.deadlocksCount++;
+                   }
 
-                    // Falls es eine Deadlockstellung ist, wird sofort die nächste Richtung untersucht
-                    if(lowerBoundCurrentBoardPosition == LowerBoundCalculation.DEADLOCK) {
-                        continue;
-                    }
+                   board.pushBoxUndo(newBoxPosition, boxPosition);
 
-                    // Falls eine Lösung gefunden wurde, wird die Stellung gemerkt und zurückgesprungen
-                    if(lowerBoundCurrentBoardPosition == 0) {
-                        solutionBoardPosition = currentBoardPosition;
-                        return true;
-                    }
+                   if(lowerBoundCurrentBoardPosition
+                           == LowerBoundCalculation.DEADLOCK) {
+                       continue;
+                   }
 
-                    // Hierdrin wird die Anzahl aller bei der Lösungssuche erreichten NichtDeadlock-
-                    // stellungen errechnet.
-                    boardPositionsCount++;
+                   // === Branching efectivo ===
+                   totalEffectiveChildren++;
+                   effectiveChildrenThisExpansion++;
 
-                    if((boardPositionsCount & 511) == 0) {
+                   if(lowerBoundCurrentBoardPosition == 0) {
+                        
+                       System.out.println("_<<<<<<<<<<<< HANSSSSSSS");
+                       
+                       solutionBoardPosition = currentBoardPosition;
 
-                        // Throw "out of memory" if less than 15MB RAM is free.
-                        if(Utilities.getMaxUsableRAMinMiB() <= 15) {
-                            isSolverStoppedDueToOutOfMemory = true;
-                            cancel(true);
-                        }
-                    }
+                       int depth = solutionBoardPosition.getPushesCount();
 
-                    // Stellung in der Hashtable speichern, um keine Stellung doppelt zu untersuchen.
-                    positionStorage.storeBoardPosition(currentBoardPosition);
+                       application.movesHistory.branchingReal =
+                           (double) totalChildren / application.movesHistory.localExpandedNodes;
 
-                    // Stellung in die Queue der noch zu untersuchenden Stellungen eintragen.
-                    storeBoardPosition(currentBoardPosition, lowerBoundCurrentBoardPosition);
-                }
-            }
+                       application.movesHistory.branchingEffective =
+                           (double) totalEffectiveChildren / application.movesHistory.localExpandedNodes;
+
+                       application.movesHistory.branchingClassic =
+                           Math.pow(application.movesHistory.localExpandedNodes, 1.0 / depth);
+
+                       application.movesHistory.totalChildren = totalChildren;
+                       application.movesHistory.totalEffectiveChildren = totalEffectiveChildren;
+
+                       application.movesHistory.minBranchingReal = minBranchingReal;
+                       application.movesHistory.maxBranchingReal = maxBranchingReal;
+
+                       application.movesHistory.minBranchingEffective = minBranchingEffective;
+                       application.movesHistory.maxBranchingEffective = maxBranchingEffective;
+
+                       application.movesHistory.repeatedNodes = repeatedChildren;
+                       application.movesHistory.redundancy =
+                           (repeatedChildren > 0)
+                               ? (double) totalChildren / repeatedChildren
+                               : 0.0;
+
+                       SaveSearchAlgorithmStadistics();
+                       return true;
+                   }
+
+                   boardPositionsCount++;
+
+                   if((boardPositionsCount & 511) == 0) {
+                       if(Utilities.getMaxUsableRAMinMiB() <= 15) {
+                           isSolverStoppedDueToOutOfMemory = true;
+                           cancel(true);
+                       }
+                   }
+
+                   positionStorage.storeBoardPosition(currentBoardPosition);
+                   storeBoardPosition(currentBoardPosition,
+                                      lowerBoundCurrentBoardPosition);
+               }
+           }
+
+           // === HANS: actualizar min / max global ===
+           minBranchingReal =
+               Math.min(minBranchingReal, childrenThisExpansion);
+           maxBranchingReal =
+               Math.max(maxBranchingReal, childrenThisExpansion);
+
+           minBranchingEffective =
+               Math.min(minBranchingEffective, effectiveChildrenThisExpansion);
+           maxBranchingEffective =
+               Math.max(maxBranchingEffective, effectiveChildrenThisExpansion);
+           // =========================================
+       }
+
+       return false;
+   }
+   
+       private void SaveSearchAlgorithmStadistics() {
+        positionStorage.ComputeStats();
+        int openListLenght = 0;
+        for(List<IBoardPosition> list : reachedBoardPositions) {
+            openListLenght += list.size();
         }
 
-        return false;
+        application.movesHistory.closeListLenght = positionStorage.getNumberOfStoredBoardPositions();
+        application.movesHistory.openListLenght = openListLenght;
+        application.movesHistory.corralBoardPositionsCount = positionStorage.m_corralBoardPositionCount;
+        application.movesHistory.absoluteBoardPositionsCount = positionStorage.m_absoluteBoardPositionsCount;
+        application.movesHistory.relativeBoardPositionsCount = positionStorage.m_relativeBoardPositionsCount;
+        application.movesHistory.foldCollisionString = positionStorage.foldCollisionString;
     }
 
 

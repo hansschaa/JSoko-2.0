@@ -42,6 +42,26 @@ public final class History implements DirectionConstants {
 	// The variable "currentMovementNo" indicates the current position within
 	// this vector.  We need that for undo undone movements (aka "redo").
 	private int currentMovementNo = -1;
+        public int iterations;
+        public int localExpandedNodes;
+        public double branchingReal;
+        public double branchingEffective;
+        public double branchingClassic;
+        public int totalChildren;
+        public int totalEffectiveChildren;
+        public int minBranchingReal;
+        public int maxBranchingReal;
+        public int minBranchingEffective;
+        public int maxBranchingEffective;
+        public long repeatedNodes;
+        public double redundancy;
+        public int closeListLenght;
+        public int openListLenght;
+        public int corralBoardPositionsCount;
+        public int absoluteBoardPositionsCount;
+        public int relativeBoardPositionsCount;
+        public String foldCollisionString;
+        public int deadlocksCount;
 
 
 	/**

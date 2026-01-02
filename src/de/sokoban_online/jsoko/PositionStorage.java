@@ -160,6 +160,8 @@ public final class PositionStorage {
 		return null;
 	}
 
+ 
+
 	/**
 	 * All objects stored in the hash table are instances of this class.
 	 *
@@ -247,4 +249,50 @@ public final class PositionStorage {
 			}
 		}
 	}
+        
+        //HANS
+        // Number of corral board positions.
+        public int m_corralBoardPositionCount = 0;
+
+        // Number of absolute board positions.
+        public int m_absoluteBoardPositionsCount = 0;
+
+        // Number of relative board positions.
+        public int m_relativeBoardPositionsCount = 0;
+        
+        public String foldCollisionString;
+        
+        public void ComputeStats(){
+        
+            int[] statistic = new int[1000];
+            for (Entry element : table) {
+                    int counter = 0;
+
+                    for (Entry entry = element; entry != null; entry = entry.next, counter++) {
+                            if (entry.getBoardPosition() instanceof CorralBoardPosition) {
+                                    m_corralBoardPositionCount++;
+                            }
+                            if (entry.getBoardPosition() instanceof AbsoluteBoardPosition) {
+                                    m_absoluteBoardPositionsCount++;
+                            }
+                            if (entry.getBoardPosition() instanceof RelativeBoardPosition) {
+                                    m_relativeBoardPositionsCount++;
+                            }
+
+                            if (entry.getBoardPosition().hashCode() == 0) {
+                                    System.out.println("Hashvalue of 0!");
+                            }
+
+                            //				if(((BoardPosition) entry.getBoardPosition()).getBoxNo() == 511)
+                            //					System.out.println("No box pushed"+" Class = "+entry.getBoardPosition().getClass());
+                    }
+                    statistic[counter > 999 ? 999 : counter]++;
+            }
+
+            for (int index = 1; index < statistic.length; index++) {
+                    if (statistic[index] > 0) {
+                            foldCollisionString += statistic[index] + ",";
+                    }
+            }
+        }
 }
