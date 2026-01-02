@@ -811,6 +811,15 @@ public final class SolverGUI extends JPanel implements ActionListener {
 			int boardPositionsCount;
 			String solution = null;
 			String status = "";
+                private int branchingRealTotal;
+                private double branchingRealAvg;
+                private int branchingRealMin;
+                private int branchingRealMax;
+                private int branchingEffTotal;
+                private double branchingEffAvg;
+                private int branchingEffMin;
+                private int branchingEffMax;
+                private double redundancy;
 		}
 
 		JDialog solvingProgress = new JDialog(application, Texts.getText("solver.solvingResults"));
@@ -1043,6 +1052,18 @@ public final class SolverGUI extends JPanel implements ActionListener {
 						levelData.pushesCount 		  = application.movesHistory.getPushesCount();
 						levelData.movesCount  		  = application.movesHistory.getMovementsCount();
 						levelData.boardPositionsCount = solver.boardPositionsCount;
+                                                // ===== NUEVAS STATS =====
+                                                levelData.branchingRealTotal = application.movesHistory.totalChildren;
+                                                levelData.branchingRealAvg   = application.movesHistory.branchingReal;
+                                                levelData.branchingRealMin   = application.movesHistory.minBranchingReal;
+                                                levelData.branchingRealMax   = application.movesHistory.maxBranchingReal;
+
+                                                levelData.branchingEffTotal  = application.movesHistory.totalEffectiveChildren;
+                                                levelData.branchingEffAvg    = application.movesHistory.branchingEffective;
+                                                levelData.branchingEffMin    = application.movesHistory.minBranchingEffective;
+                                                levelData.branchingEffMax    = application.movesHistory.maxBranchingEffective;
+
+                                                levelData.redundancy         = application.movesHistory.redundancy;
 					} else {
 						// If no reason for failing is stored simply display "not solved".
 						if(levelData.status.equals("")) {
@@ -1091,6 +1112,28 @@ public final class SolverGUI extends JPanel implements ActionListener {
 								    Texts.getText("solver.solvingStatus") + ": " + levelData.status  +
 								    (Debug.isSettingsDebugModeActivated ? "  |   "+String.format("%s %12d", Texts.getText("numberofpositions"), levelData.boardPositionsCount) : "") +   //Misuse of "isSettingsDebugModeActivated": added for Michael (see mails 22.04.2013).
 							        "\n");
+                                        
+                                        // ===== NUEVAS STATS =====
+                                        textArea.append(String.format(
+                                            "   BR(real): total=%d avg=%.2f min=%d max=%d%n",
+                                            levelData.branchingRealTotal,
+                                            levelData.branchingRealAvg,
+                                            levelData.branchingRealMin,
+                                            levelData.branchingRealMax
+                                        ));
+
+                                        textArea.append(String.format(
+                                            "   BR(eff ): total=%d avg=%.2f min=%d max=%d%n",
+                                            levelData.branchingEffTotal,
+                                            levelData.branchingEffAvg,
+                                            levelData.branchingEffMin,
+                                            levelData.branchingEffMax
+                                        ));
+
+                                        textArea.append(String.format(
+                                            "   Redundancy: %.4f%n",
+                                            levelData.redundancy
+                                        ));
 
 					// If requested also display the found solution as lurd string.
 					if(isDisplaySolutionsEnabled.isSelected()) {
